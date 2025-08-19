@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Ghi Lô Sản Xuất – Báo cáo ảnh</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Icon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23ff6a00%22/></svg>">
+  <!-- ZIP deps (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <h1 class="brand"><span class="dot"></span> SỔ GHI LÔ</h1>
+    <div class="now" id="nowText">--:--</div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="tab-form">Ghi lô</button>
+    <button class="tab" data-tab="tab-list">Danh sách</button>
+    <button class="tab" data-tab="tab-help">HDSD</button>
+  </nav>
+
+  <!-- GHI LÔ -->
+  <main id="tab-form" class="tab-panel active">
+    <section class="card">
+      <h2 class="card-title">Thông tin chung</h2>
+      <div class="grid">
+        <label class="field">
+          <span>Sản phẩm</span>
+          <input id="product" placeholder="Ví dụ: Dây 7x0.156" required />
+        </label>
+        <label class="field">
+          <span>Quy cách / Kích thước</span>
+          <input id="spec" placeholder="Ví dụ: OD 0.92–0.93 mm" />
+        </label>
+        <label class="field">
+          <span>Đường kính đồng (mm)</span>
+          <input id="diaCu" type="number" step="0.001" inputmode="decimal" placeholder="0.156" required />
+        </label>
+        <label class="field">
+          <span>Đường kính cách điện (mm)</span>
+          <input id="diaOD" type="number" step="0.001" inputmode="decimal" placeholder="0.92" required />
+        </label>
+        <label class="field">
+          <span>Trọng lượng (kg)</span>
+          <input id="weight" type="number" step="0.01" inputmode="decimal" placeholder="75.0" />
+        </label>
+        <label class="field">
+          <span>Số mét (m)</span>
+          <input id="meters" type="number" step="0.1" inputmode="decimal" placeholder="30600" />
+        </label>
+        <label class="field">
+          <span>Tên người chạy</span>
+          <input id="operator" placeholder="Nguyễn Văn A" required />
+        </label>
+      </div>
+      <div class="sub-note">
+        Thời gian lưu sẽ tự động lấy theo hệ thống (không cần nhập).
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">Ảnh chứng từ (mở camera)</h2>
+      <div class="grid grid-2">
+        <label class="field file-field">
+          <span>Ảnh đo <b>đồng tâm</b></span>
+          <input id="photoConcentric" type="file" accept="image/*" capture="environment" />
+          <img id="previewConcentric" class="preview" alt="" />
+        </label>
+        <label class="field file-field">
+          <span>Ảnh đo <b>OD cách điện</b></span>
+          <input id="photoOD" type="file" accept="image/*" capture="environment" />
+          <img id="previewOD" class="preview" alt="" />
+        </label>
+        <label class="field file-field">
+          <span>Ảnh <b>số lô</b></span>
+          <input id="photoLot" type="file" accept="image/*" capture="environment" />
+          <img id="previewLot" class="preview" alt="" />
+        </label>
+        <label class="field file-field">
+          <span>Ảnh <b>số cân</b></span>
+          <input id="photoScale" type="file" accept="image/*" capture="environment" />
+          <img id="previewScale" class="preview" alt="" />
+        </label>
+      </div>
+      <div class="sub-note">Ảnh sẽ được nén vừa phải để tiết kiệm bộ nhớ.</div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">Ký điện tử</h2>
+      <div class="sig-wrap">
+        <canvas id="sigPad" width="800" height="280"></canvas>
+        <div class="sig-tools">
+          <label class="field">
+            <span>Họ tên người ký</span>
+            <input id="signerName" placeholder="Họ tên người ký" required />
+          </label>
+          <button id="clearSig" class="btn ghost">Xóa chữ ký</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="actions">
+      <button id="saveBtn" class="btn primary">Lưu phiếu</button>
+      <button id="resetBtn" class="btn">Làm mới</button>
+    </div>
+  </main>
+
+  <!-- DANH SÁCH -->
+  <main id="tab-list" class="tab-panel">
+    <section class="card">
+      <h2 class="card-title">Bộ lọc</h2>
+      <div class="grid">
+        <label class="field">
+          <span>Từ ngày</span>
+          <input id="fromDate" type="date" />
+        </label>
+        <label class="field">
+          <span>Đến ngày</span>
+          <input id="toDate" type="date" />
+        </label>
+        <label class="field">
+          <span>Người chạy</span>
+          <input id="filterOperator" placeholder="Lọc theo tên" />
+        </label>
+        <label class="field">
+          <span>Sản phẩm</span>
+          <input id="filterProduct" placeholder="Lọc theo sản phẩm" />
+        </label>
+      </div>
+      <div class="actions">
+        <button id="applyFilter" class="btn">Áp dụng</button>
+        <button id="clearFilter" class="btn ghost">Xóa lọc</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title-row">
+        <h2 class="card-title">Danh sách phiếu</h2>
+        <div class="pill" id="countBadge">0</div>
+      </div>
+      <div id="listWrap" class="list"></div>
+      <div class="actions sticky-actions">
+        <button id="exportImgs" class="btn primary">Xuất ảnh (ZIP) theo bộ lọc</button>
+        <button id="deleteAll" class="btn danger">Xóa tất cả</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- HƯỚNG DẪN -->
+  <main id="tab-help" class="tab-panel">
+    <section class="card">
+      <h2 class="card-title">Hướng dẫn nhanh</h2>
+      <ol class="help">
+        <li>Vào tab <b>Ghi lô</b> → nhập thông tin → chụp 4 ảnh → ký điện tử → <b>Lưu phiếu</b>.</li>
+        <li>Vào tab <b>Danh sách</b> → lọc theo ngày/nhân sự → <b>Xuất ảnh (ZIP)</b> để gửi báo cáo.</li>
+        <li>Dữ liệu lưu trên thiết bị (LocalStorage). Xóa cache sẽ mất dữ liệu.</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <small>© Báo cáo sản xuất • giao diện cam chuyên nghiệp</small>
+  </footer>
+
+  <canvas id="renderCanvas" class="hidden"></canvas>
+  <script src="app.js"></script>
+</body>
+</html>
